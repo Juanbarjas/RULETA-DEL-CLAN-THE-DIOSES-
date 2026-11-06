@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神 THE DIOSES 亗 - Ruleta de Sorteos</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        godGold: '#FFD700',
+                        godRed: '#FF003C',
+                        godDark: '#0A0A10',
+                        godCard: '#12121C',
+                        godNeon: '#00F0FF'
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #06060c;
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(255, 0, 60, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 90%, rgba(255, 215, 0, 0.1) 0%, transparent 40%);
+            color: #E2E8F0;
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Neon Glow Effects */
+        .glow-gold {
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7), 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+        .glow-red {
+            text-shadow: 0 0 10px rgba(255, 0, 60, 0.7), 0 0 20px rgba(255, 0, 60, 0.4);
+        }
+        .box-glow-gold {
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.1);
+        }
+        .box-glow-red {
+            box-shadow: 0 0 15px rgba(255, 0, 60, 0.4), inset 0 0 15px rgba(255, 0, 60, 0.1);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0A0A10;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF003C;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FFD700;
+        }
+
+        /* Pulsing Button Animation */
+        @keyframes pulse-btn {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 0, 60, 0.6); }
+            50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(255, 215, 0, 0.9); }
+        }
+        .animate-spin-btn {
+            animation: pulse-btn 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header Principal -->
+    <header class="py-6 px-4 text-center border-b border-red-900/30 bg-black/40 backdrop-blur-md relative z-10">
+        <div class="max-w-6xl mx-auto flex flex-col items-center justify-center">
+            <h1 class="font-orbitron text-4xl sm:text-6xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-300 glow-gold uppercase">
+                神 THE DIOSES 亗
+            </h1>
+            <p class="text-xs sm:text-base text-gray-400 tracking-widest mt-1 font-semibold uppercase flex items-center gap-2">
+                <i class="fa-solid font-bold text-red-500 fa-crosshairs"></i> Ruleta Oficial de Sorteos del Clan <i class="fa-solid text-red-500 fa-crosshairs"></i>
+            </p>
+        </div>
+    </header>
+
+    <!-- Contenido Principal Grid -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Panel Izquierdo: Gestión de Participantes -->
+        <section class="lg:col-span-4 bg-godCard border border-gray-800 rounded-xl p-5 shadow-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h2 class="font-orbitron text-lg font-bold text-yellow-400 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-red-500"></i> Integrantes (<span id="player-count">0</span>)
+                </h2>
+                <div class="flex gap-2">
+                    <button id="btn-preload" title="Cargar Lista por Defecto del Clan" class="px-2.5 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-yellow-400 border border-yellow-500/30 rounded transition flex items-center gap-1">
+                        <i class="fa-solid fa-bolt"></i> Clan
+                    </button>
+                    <button id="btn-clear" title="Limpiar lista completa" class="px-2.5 py-1 text-xs bg-red-950/50 hover:bg-red-900 text-red-400 border border-red-800 rounded transition flex items-center gap-1">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulario para Agregar Participante -->
+            <form id="add-player-form" class="flex gap-2">
+                <input type="text" id="player-name-input" placeholder="Nombre o ID del Jugador..." 
+                       class="flex-1 bg-black/60 border border-gray-700 focus:border-yellow-400 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none transition font-orbitron placeholder-gray-600" maxlength="25" required>
+                <button type="submit" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold px-4 py-2 rounded-lg text-sm transition flex items-center justify-center">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </form>
+
+            <!-- Lista con Scroll de Participantes -->
+            <div class="h-64 sm:h-80 overflow-y-auto pr-1 flex flex-col gap-2" id="players-list">
+                <!-- Los elementos se cargan mediante JS -->
+            </div>
+
+            <!-- Entrada masiva rápida (Opcional) -->
+            <div class="mt-2 pt-3 border-t border-gray-800/80">
+                <button id="toggle-bulk-btn" class="text-xs text-gray-400 hover:text-yellow-400 transition flex items-center gap-1 font-mono">
+                    <i class="fa-solid fa-list-check"></i> Carga rápida masiva (separados por coma)
+                </button>
+                <div id="bulk-area" class="hidden mt-2 flex-col gap-2">
+                    <textarea id="bulk-input" rows="3" placeholder="Odin, Zeus, Thor, Anubis..." class="w-full bg-black/60 border border-gray-800 rounded-lg p-2 text-xs text-gray-300 outline-none focus:border-yellow-500/50"></textarea>
+                    <button id="btn-bulk-add" class="bg-gray-800 hover:bg-gray-700 text-yellow-400 text-xs py-1.5 rounded border border-yellow-500/20 font-bold transition">Añadir Varios</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel Centro: Ruleta Canvas -->
+        <section class="lg:col-span-5 flex flex-col items-center justify-center relative min-h-[400px]">
+            
+            <!-- Contenedor Puntero y Canvas -->
+            <div class="relative w-full max-w-[380px] sm:max-w-[420px] aspect-square flex items-center justify-center">
+                
+                <!-- Puntero indicador superior (Flecha/Triángulo Neón) -->
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-8 h-10 pointer-events-none drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]">
+                    <svg viewBox="0 0 30 40" class="w-full h-full">
+                        <polygon points="15,40 0,0 30,0" fill="#FFD700" stroke="#FF003C" stroke-width="3" />
+                    </svg>
+                </div>
+
+                <!-- Marco Brillante de la Ruleta -->
+                <div class="w-full h-full rounded-full p-2.5 bg-gradient-to-b from-yellow-500/30 via-red-600/20 to-yellow-500/40 border border-yellow-500/40 shadow-[0_0_40px_rgba(255,0,60,0.2)] flex items-center justify-center">
+                    <canvas id="wheelCanvas" width="500" height="500" class="w-full h-full rounded-full cursor-pointer transition-transform duration-75"></canvas>
+                </div>
+            </div>
+
+            <!-- Botón Central de Girar -->
+            <div class="mt-6 flex flex-col items-center">
+                <button id="btn-spin" disabled class="animate-spin-btn bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 hover:brightness-125 text-black font-orbitron font-black text-xl sm:text-2xl px-10 py-3.5 rounded-full shadow-[0_0_25px_rgba(255,0,60,0.8)] border-2 border-yellow-300 tracking-wider disabled:opacity-40 disabled:pointer-events-none disabled:animate-none transition transform active:scale-95">
+                    ¡ GIRAR !
+                </button>
+            </div>
+        </section>
+
+        <!-- Panel Derecho: Historial de Ganadores y Sonido -->
+        <section class="lg:col-span-3 bg-godCard border border-gray-800 rounded-xl p-5 shadow-2xl flex flex-col gap-4">
+            
+            <!-- Control de Audio -->
+            <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h3 class="font-orbitron text-sm font-bold text-gray-300 flex items-center gap-2">
+                    <i class="fa-solid fa-volume-high text-yellow-400"></i> Efectos de Audio
+                </h3>
+                <button id="btn-toggle-sound" class="text-yellow-400 hover:text-yellow-300 text-lg transition">
+                    <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+                </button>
+            </div>
+
+            <!-- Historial -->
+            <div class="flex flex-col gap-2 flex-1">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-orbitron text-base font-bold text-yellow-400 flex items-center gap-2">
+                        <i class="fa-solid fa-trophy text-yellow-500"></i> Ganadores
+                    </h3>
+                    <button id="btn-clear-history" class="text-xs text-gray-500 hover:text-red-400 transition">Limpiar</button>
+                </div>
+
+                <div id="winners-history" class="h-64 sm:h-80 overflow-y-auto pr-1 flex flex-col gap-2">
+                    <div class="text-center text-gray-600 text-xs py-8 font-mono">Aún no hay ganadores en esta sesión.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Clan Banner -->
+    <footer class="py-4 text-center text-xs text-gray-600 border-t border-gray-900 bg-black/60">
+        <p class="font-orbitron text-gray-500">CLAN Free Fire &bull; <span class="text-yellow-500 font-bold">神 THE DIOSES 亗</span> &bull; Domina la Arena</p>
+    </footer>
+
+    <!-- MODAL DE GANADOR POPUP -->
+    <div id="winner-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center z-50 p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-gradient-to-b from-gray-900 via-godCard to-black border-2 border-yellow-400 rounded-2xl max-w-md w-full p-6 text-center shadow-[0_0_50px_rgba(255,215,0,0.4)] transform scale-90 transition-transform duration-300 relative overflow-hidden" id="modal-content">
+            
+            <!-- Luces decorativas en modal -->
+            <div class="absolute -top-12 -left-12 w-24 h-24 bg-yellow-500/20 rounded-full blur-xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -right-12 w-24 h-24 bg-red-500/20 rounded-full blur-xl pointer-events-none"></div>
+
+            <div class="inline-block p-4 rounded-full bg-yellow-500/10 border border-yellow-500/30 mb-3 text-yellow-400 text-4xl animate-bounce">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+            
+            <h2 class="font-orbitron text-gray-400 text-sm font-bold tracking-widest uppercase">¡Tenemos un Ganador!</h2>
+            
+            <div id="modal-winner-name" class="font-orbitron text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-red-500 my-4 glow-gold truncate px-2">
+                JUGADOR
+            </div>
+            
+            <p class="text-xs text-gray-400 mb-6 font-mono">Felicidades al victorioso del Clan <span class="text-red-400 font-bold">神 THE DIOSES 亗</span></p>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button id="btn-modal-remove" class="flex-1 bg-red-950 hover:bg-red-900 text-red-200 border border-red-700/60 font-bold py-2.5 px-4 rounded-lg text-sm transition">
+                    <i class="fa-solid fa-user-minus mr-1"></i> Sacar de lista
+                </button>
+                <button id="btn-modal-keep" class="flex-1 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-orbitron font-bold py-2.5 px-4 rounded-lg text-sm transition shadow-lg">
+                    Mantener
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE FUNCIONALIDAD -->
+    <script>
+        // --- ESTADO DE LA APLICACIÓN ---
+        const DEFAULT_PLAYERS = [
+            "神 HIZOKA 亗", 
+            "神 GON 亗", 
+            "神 BETTH 亗", 
+            "神 THEKING 亗", 
+            "神 JULIAN 亗", 
+            "神 SATANAS 亗"
+        ];
+
+        let players = [...DEFAULT_PLAYERS];
+        let winnersHistory = [];
+        let isSoundEnabled = true;
+        let isSpinning = false;
+        
+        // Variables de la Ruleta (Canvas)
+        let currentAngle = 0; // Ángulo actual en radianes
+        let spinSpeed = 0;
+        let spinDeceleration = 0;
+        let selectedWinnerIndex = null;
+        let animationFrameId = null;
+
+        // Paleta de colores temáticos para la ruleta
+        const SEGMENT_COLORS = [
+            { bg: "#FF003C", text: "#FFFFFF" }, // Rojo Neón Clan
+            { bg: "#12121C", text: "#FFD700" }, // Negro Tarjeta / Dorado
+            { bg: "#D4AF37", text: "#000000" }, // Oro Metálico
+            { bg: "#1F1F30", text: "#00F0FF" }, // Azul Oscuro / Neón
+            { bg: "#990024", text: "#FFFFFF" }, // Rojo Oscuro
+            { bg: "#B8860B", text: "#FFFFFF" }  // Dorado Oscuro
+        ];
+
+        // --- SINTETIZADOR DE AUDIO (Web Audio API) ---
+        class SoundEffects {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playTick() {
+                if (!isSoundEnabled) return;
+                this.init();
+                
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.04);
+
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.04);
+            }
+
+            playVictory() {
+                if (!isSoundEnabled) return;
+                this.init();
+
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
+
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.1 + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(this.ctx.currentTime + idx * 0.1);
+                    osc.stop(this.ctx.currentTime + idx * 0.1 + 0.4);
+                });
+            }
+        }
+
+        const sounds = new SoundEffects();
+
+        // --- REFERENCIAS DOM ---
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const btnSpin = document.getElementById('btn-spin');
+        const playersListEl = document.getElementById('players-list');
+        const playerCountEl = document.getElementById('player-count');
+        const addPlayerForm = document.getElementById('add-player-form');
+        const playerNameInput = document.getElementById('player-name-input');
+        const btnPreload = document.getElementById('btn-preload');
+        const btnClear = document.getElementById('btn-clear');
+        const winnersHistoryEl = document.getElementById('winners-history');
+        const btnClearHistory = document.getElementById('btn-clear-history');
+        const btnToggleSound = document.getElementById('btn-toggle-sound');
+        const soundIcon = document.getElementById('sound-icon');
+        const winnerModal = document.getElementById('winner-modal');
+        const modalContent = document.getElementById('modal-content');
+        const modalWinnerName = document.getElementById('modal-winner-name');
+        const btnModalRemove = document.getElementById('btn-modal-remove');
+        const btnModalKeep = document.getElementById('btn-modal-keep');
+        const toggleBulkBtn = document.getElementById('toggle-bulk-btn');
+        const bulkArea = document.getElementById('bulk-area');
+        const bulkInput = document.getElementById('bulk-input');
+        const btnBulkAdd = document.getElementById('btn-bulk-add');
+
+        // --- INICIALIZACIÓN Y RENDER ---
+        window.addEventListener('DOMContentLoaded', () => {
+            renderPlayersList();
+            drawWheel();
+        });
+
+        // --- DIBUJO DE LA RULETA (CANVAS 2D) ---
+        function drawWheel() {
+            const numSegments = players.length;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const outerRadius = canvas.width / 2 - 10;
+            const innerRadius = 45; // Centro del eje
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (numSegments === 0) {
+                // Estado Vacío
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#12121C';
+                ctx.fill();
+                ctx.strokeStyle = '#333344';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                ctx.fillStyle = '#666';
+                ctx.font = 'bold 20px Orbitron';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('AÑADE JUGADORES', centerX, centerY);
+                ctx.restore();
+                btnSpin.disabled = true;
+                return;
+            }
+
+            btnSpin.disabled = isSpinning;
+
+            const anglePerSegment = (2 * Math.PI) / numSegments;
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(currentAngle);
+
+            for (let i = 0; i < numSegments; i++) {
+                const startAngle = i * anglePerSegment;
+                const endAngle = startAngle + anglePerSegment;
+                const colorObj = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+
+                // Dibujar Segmento
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, outerRadius, startAngle, endAngle);
+                ctx.closePath();
+
+                ctx.fillStyle = colorObj.bg;
+                ctx.fill();
+
+                // Borde del segmento
+                ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Dibujar Texto del Nombre
+                ctx.save();
+                ctx.rotate(startAngle + anglePerSegment / 2);
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = colorObj.text;
+                
+                // Ajustar tamaño de fuente según la cantidad de integrantes
+                let fontSize = 18;
+                if (numSegments > 16) fontSize = 12;
+                else if (numSegments > 10) fontSize = 14;
+
+                ctx.font = `bold ${fontSize}px Orbitron, sans-serif`;
+
+                // Recortar texto si es muy largo
+                let name = players[i];
+                if (name.length > 16) name = name.substring(0, 14) + '...';
+
+                ctx.fillText(name, outerRadius - 20, 0);
+                ctx.restore();
+            }
+
+            // Decoración del Centro (Hub)
+            ctx.beginPath();
+            ctx.arc(0, 0, innerRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0A0A10';
+            ctx.fill();
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Icono o Texto Central
+            ctx.fillStyle = '#FF003C';
+            ctx.font = 'bold 16px Orbitron';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('神', 0, 0);
+
+            ctx.restore();
+        }
+
+        // --- GESTIÓN DE JUGADORES ---
+        function renderPlayersList() {
+            playersListEl.innerHTML = '';
+            playerCountEl.textContent = players.length;
+
+            if (players.length === 0) {
+                playersListEl.innerHTML = `
+                    <div class="text-center text-gray-600 text-xs py-8">
+                        Lista vacía. Haz clic en <span class="text-yellow-400 font-bold">"Clan"</span> para cargar integrantes por defecto.
+                    </div>`;
+                drawWheel();
+                return;
+            }
+
+            players.forEach((player, index) => {
+                const colorObj = SEGMENT_COLORS[index % SEGMENT_COLORS.length];
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between bg-black/40 border border-gray-800/80 hover:border-gray-700 px-3 py-2 rounded-lg text-sm transition group';
+                
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden pr-2">
+                        <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${colorObj.bg}"></span>
+                        <span class="font-orbitron font-semibold text-gray-200 truncate group-hover:text-yellow-400 transition">${escapeHtml(player)}</span>
+                    </div>
+                    <button onclick="removePlayer(${index})" class="text-gray-600 hover:text-red-400 px-1 transition" title="Eliminar">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                playersListEl.appendChild(item);
+            });
+
+            drawWheel();
+        }
+
+        function addPlayer(name) {
+            const trimmed = name.trim();
+            if (!trimmed) return;
+            players.push(trimmed);
+            renderPlayersList();
+        }
+
+        function removePlayer(index) {
+            if (isSpinning) return;
+            players.splice(index, 1);
+            renderPlayersList();
+        }
+
+        // --- LÓGICA DEL GIRO (ANIMACIÓN Y FÍSICA) ---
+        let lastSegmentIndex = -1;
+
+        function spinWheel() {
+            if (isSpinning || players.length === 0) return;
+
+            sounds.init();
+            isSpinning = true;
+            btnSpin.disabled = true;
+
+            // Velocidad inicial y fricción aleatorias pero controladas
+            spinSpeed = Math.random() * 0.2 + 0.35; // rad/frame inicial
+            spinDeceleration = Math.random() * 0.0015 + 0.0025; // desaceleración
+
+            lastSegmentIndex = -1;
+            animateSpin();
+        }
+
+        function animateSpin() {
+            currentAngle += spinSpeed;
+            currentAngle %= (2 * Math.PI); // Mantener entre 0 y 2pi
+
+            spinSpeed -= spinDeceleration;
+
+            // Detectar cuando el puntero pasa por un nuevo segmento para el sonido TIK
+            const numSegments = players.length;
+            const anglePerSegment = (2 * Math.PI) / numSegments;
+            
+            // Puntero arriba en -90 grados (-PI/2)
+            // Calculamos el índice actual bajo el puntero
+            let normalizedAngle = (3 * Math.PI / 2 - currentAngle) % (2 * Math.PI);
+            if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
+
+            const currentSegmentIndex = Math.floor(normalizedAngle / anglePerSegment);
+
+            if (currentSegmentIndex !== lastSegmentIndex) {
+                sounds.playTick();
+                lastSegmentIndex = currentSegmentIndex;
+            }
+
+            drawWheel();
+
+            if (spinSpeed > 0) {
+                animationFrameId = requestAnimationFrame(animateSpin);
+            } else {
+                // El giro terminó
+                isSpinning = false;
+                selectedWinnerIndex = currentSegmentIndex;
+                onSpinComplete();
+            }
+        }
+
+        function onSpinComplete() {
+            const winner = players[selectedWinnerIndex];
+
+            // Sonido y Confeti
+            sounds.playVictory();
+            triggerConfetti();
+
+            // Agregar al historial
+            addWinnerToHistory(winner);
+
+            // Mostrar Popup Modal
+            setTimeout(() => {
+                showWinnerModal(winner);
+            }, 300);
+        }
+
+        // --- EFECTO CONFETI Y PARTICULAS ---
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#FFD700', '#FF003C', '#FFFFFF', '#00F0FF']
+                });
+            }
+        }
+
+        // --- HISTORIAL ---
+        function addWinnerToHistory(winnerName) {
+            winnersHistory.unshift({
+                name: winnerName,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+
+            renderHistory();
+        }
+
+        function renderHistory() {
+            winnersHistoryEl.innerHTML = '';
+            if (winnersHistory.length === 0) {
+                winnersHistoryEl.innerHTML = `<div class="text-center text-gray-600 text-xs py-8 font-mono">Aún no hay ganadores en esta sesión.</div>`;
+                return;
+            }
+
+            winnersHistory.forEach((item, i) => {
+                const el = document.createElement('div');
+                el.className = 'flex items-center justify-between bg-black/50 border border-yellow-500/20 px-3 py-2 rounded-lg text-sm';
+                el.innerHTML = `
+                    <div class="flex items-center gap-2 truncate">
+                        <span class="text-xs text-yellow-500 font-bold font-mono">#${winnersHistory.length - i}</span>
+                        <span class="font-orbitron text-yellow-300 font-semibold truncate">${escapeHtml(item.name)}</span>
+                    </div>
+                    <span class="text-[10px] text-gray-500 font-mono">${item.time}</span>
+                `;
+                winnersHistoryEl.appendChild(el);
+            });
+        }
+
+        // --- MODAL DE GANADOR ---
+        function showWinnerModal(winnerName) {
+            modalWinnerName.textContent = winnerName;
+            winnerModal.classList.remove('hidden');
+            winnerModal.classList.add('flex');
+            
+            setTimeout(() => {
+                winnerModal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-90');
+                modalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function hideWinnerModal() {
+            winnerModal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-90');
+            
+            setTimeout(() => {
+                winnerModal.classList.add('hidden');
+                winnerModal.classList.remove('flex');
+            }, 300);
+        }
+
+        // --- EVENT LISTENERS ---
+        btnSpin.addEventListener('click', spinWheel);
+
+        addPlayerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            addPlayer(playerNameInput.value);
+            playerNameInput.value = '';
+        });
+
+        btnPreload.addEventListener('click', () => {
+            if (isSpinning) return;
+            players = [...DEFAULT_PLAYERS];
+            renderPlayersList();
+        });
+
+        btnClear.addEventListener('click', () => {
+            if (isSpinning) return;
+            players = [];
+            renderPlayersList();
+        });
+
+        btnClearHistory.addEventListener('click', () => {
+            winnersHistory = [];
+            renderHistory();
+        });
+
+        btnToggleSound.addEventListener('click', () => {
+            isSoundEnabled = !isSoundEnabled;
+            if (isSoundEnabled) {
+                soundIcon.className = 'fa-solid fa-volume-high';
+                btnToggleSound.classList.remove('text-gray-500');
+                btnToggleSound.classList.add('text-yellow-400');
+            } else {
+                soundIcon.className = 'fa-solid fa-volume-xmark';
+                btnToggleSound.classList.remove('text-yellow-400');
+                btnToggleSound.classList.add('text-gray-500');
+            }
+        });
+
+        // Modal actions
+        btnModalKeep.addEventListener('click', () => {
+            hideWinnerModal();
+        });
+
+        btnModalRemove.addEventListener('click', () => {
+            if (selectedWinnerIndex !== null && selectedWinnerIndex < players.length) {
+                players.splice(selectedWinnerIndex, 1);
+                renderPlayersList();
+            }
+            hideWinnerModal();
+        });
+
+        // Bulk Add Toggle
+        toggleBulkBtn.addEventListener('click', () => {
+            bulkArea.classList.toggle('hidden');
+            bulkArea.classList.toggle('flex');
+        });
+
+        btnBulkAdd.addEventListener('click', () => {
+            const rawText = bulkInput.value;
+            if (!rawText.trim()) return;
+            const items = rawText.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            items.forEach(item => players.push(item));
+            bulkInput.value = '';
+            bulkArea.classList.add('hidden');
+            bulkArea.classList.remove('flex');
+            renderPlayersList();
+        });
+
+        // Helper para evitar inyección HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Redimensionamiento responsive del Canvas
+        window.addEventListener('resize', () => {
+            drawWheel();
+        });
+    </script>
+</body>
+</html>
